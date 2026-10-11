@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "local";
   if (limited("login:" + ip)) return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
   const parsed = credentials.safeParse(await req.json().catch(() => null));
-  const fail = () => NextResponse.json({ error: "Wrong username or password." }, { status: 401 });
+  const fail = () => NextResponse.json({ error: "Wrong username or password cok." }, { status: 401 });
   if (!parsed.success) return fail();
   const { username, password } = parsed.data;
 
