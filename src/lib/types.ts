@@ -1,6 +1,7 @@
 export type TierKey = "C" | "B" | "A" | "S" | "S_PLUS" | "PRIME" | "ABSOLUTE" | "COLLECTOR";
+// `anim` makes a normal sprite blink and nod its head (ABSOLUTE cards).
 // `scene` marks an animated scene card (COLLECTOR): the canvas is drawn by lib/scenes.ts instead of the 16x16 sprite.
-export type SpriteData = { pal: Record<string, string>; ov: [number, number, string][]; scene?: string };
+export type SpriteData = { pal: Record<string, string>; ov: [number, number, string][]; scene?: string; anim?: boolean };
 // Unowned cards carry only id, number and sprite shape (for the silhouette). Name, tier and text stay on the server.
 export type PublicCard = {
   id: number; no: number; sprite: SpriteData; owned: boolean;
@@ -35,14 +36,6 @@ export type Conv = { who: string | null; last: string; at: string; unread: numbe
 // The other player's profile picture and claimed border, shown next to their messages.
 export type ChatPeer = { avatarUrl: string | null; border: string | null };
 export type ChatMsg = { id: number; mine: boolean; body: string; at: string; read: boolean };
-export type Msg = {
-  id: number;
-  who?: string | null;
-  body: string;
-  at: string;
-  unread: boolean;
-  kind: string;
-};
 
 // What a card sells for, in coins, by tier (Sell menu).
 export const SELL_PRICE: Record<TierKey, number> = { C: 10, B: 25, A: 80, S: 250, S_PLUS: 700, PRIME: 3000, ABSOLUTE: 10000, COLLECTOR: 50000 };

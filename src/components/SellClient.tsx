@@ -37,6 +37,17 @@ export default function SellClient({ copies }: { copies: Copy[] }) {
     setSel(ids.slice(0, MAX_SELL));
   }
 
+  // JUAL SEMUA per tier (hanya C, B, A): pilih semua kartu di tier itu lalu buka konfirmasi jual
+  const BULK_TIERS: TierKey[] = ["C", "B", "A"];
+  function sellAllTier(t: TierKey) {
+    const ids = copies.filter((c) => c.card.tier === t).map((c) => c.rowId);
+    if (!ids.length) return;
+    setSel(ids.slice(0, MAX_SELL));
+    setOk(true);
+    setMsg(ids.length > MAX_SELL ? `Tier ${TIER[t].label} punya ${ids.length} kartu. Maksimal ${MAX_SELL} kartu per penjualan, jadi ${MAX_SELL} dipilih dulu.` : "");
+    setAsk(true);
+  }
+
   async function sell() {
     setBusy(true); setMsg("");
     const r = await fetch("/api/sell", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: sel }) });
@@ -62,6 +73,12 @@ export default function SellClient({ copies }: { copies: Copy[] }) {
       <div className="row">
         <button onClick={pickDuplicates}>PILIH SEMUA DUPLIKAT</button>
         <button onClick={() => setSel([])} disabled={!sel.length}>BATAL PILIH</button>
+      </div>
+      <div className="row">
+        {BULK_TIERS.map((t) => {
+          const n = copies.filter((c) => c.card.tier === t).length;
+          return <button key={t} disabled={busy || n === 0} onClick={() => sellAllTier(t)}>JUAL SEMUA {TIER[t].label} ({n})</button>;
+        })}
       </div>
       {msg && <p className="msg" role="status" style={{ color: ok ? "var(--acc)" : "#ff6b6b" }}>{msg}</p>}
 

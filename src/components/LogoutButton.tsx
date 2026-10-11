@@ -6,5 +6,5 @@ import { usePathname } from "next/navigation";
 export default function LogoutButton({ me }: { me: string }) {
   const path = (usePathname() ?? "").toLowerCase();
   if (path !== "/profile" && path !== `/u/${me.toLowerCase()}`) return null;
-  return <form action="/api/auth/logout" method="post"><button>LOGOUT</button></form>;
+  return <form action="/api/auth/logout" method="post" className="logout-tr"><button>LOGOUT</button></form>;
 }

@@ -5,7 +5,7 @@
 export type Ctx = { fillStyle: string | CanvasGradient | CanvasPattern; fillRect(x: number, y: number, w: number, h: number): void };
 export const SCENE_W = 60;
 export const SCENE_H = 80;
-export const SCENE_IDS = ["donut_cafe", "moon_walk", "blossom_pair", "crazy_rich", "surf_cat"];
+export const SCENE_IDS = ["donut_cafe", "moon_walk", "blossom_pair", "crazy_rich", "surf_cat", "villain_cat", "hero_cat", "sleepy_cat"];
 export const SCENE_FPS = 10;
 
 type Pt = [number, number];
@@ -617,11 +617,278 @@ function surfCat(p: Pen, f: number): void {
   if (f % 20 < 3) spark(p, 12, 30, "#ffffff"); if ((f + 9) % 26 < 3) spark(p, 52, 38, "#c8f0ff");
 }
 
+// ================================================================ SCENES 6 + 7: Villain Cat (black hole) and Superhero Cat (Earth)
+// Both loop every 240 frames (24 s). Drifting stars scroll left, so the cats are flying to the right and the capes stream behind them.
+type Suit = { s: string; t: string; g: string; e: string; m: string; b: string };
+const SUIT_VILLAIN: Suit = { s: "#36185a", t: "#6a34a0", g: "#8a1c2c", e: "#ff3b3b", m: "#120a1c", b: "#120a1c" };
+const SUIT_HERO: Suit = { s: "#2a5bd7", t: "#1a3a9a", g: "#ffd23f", e: "#ffd23f", m: "#e3262f", b: "#d6202a" };
+
+function inset(pts: Pt[], k: number): Pt[] {
+  const cx = pts.reduce((s, q) => s + q[0], 0) / pts.length, cy = pts.reduce((s, q) => s + q[1], 0) / pts.length;
+  return pts.map(([x, y]) => { const d = Math.hypot(x - cx, y - cy) || 1; return [x + ((cx - x) / d) * k, y + ((cy - y) / d) * k] as Pt; });
+}
+
+function starDrift(p: Pen, f: number, top: number, bot: number): void {
+  for (let layer = 0; layer < 3; layer++) {
+    const sp = [0.25, 0.5, 1][layer];
+    for (let i = 0; i < 12; i++) {
+      const sx = ((hs(layer * 40 + i) * 60 - f * sp) % 60 + 60) % 60, sy = top + hs(layer * 77 + i * 3) * (bot - top);
+      p.p(sx, sy, (f + i * 3) % [12, 16, 20][layer] < 2 ? "#ffffff" : ["#5a64a8", "#98a4e0", "#e8ecff"][layer]);
+      if (layer === 2 && i % 4 === 0) { p.p(sx - 1, sy, "#8a94d8"); p.p(sx + 1, sy, "#8a94d8"); p.p(sx, sy - 1, "#8a94d8"); p.p(sx, sy + 1, "#8a94d8"); }
+    }
+  }
+}
+
+function capeShape(p: Pen, x: number, y: number, T: number, villain: boolean, c1: string, c2: string): void {
+  const w = (k: number, a: number): number => Math.sin(T * 3 - k * 0.8) * a;
+  const pts: Pt[] = villain
+    ? [[x + 9, y + 19], [x - 6, y + 21 + w(0, 1)], [x - 18, y + 25 + w(1, 2)], [x - 28, y + 24 + w(2, 3)], [x - 22, y + 30 + w(3, 3)], [x - 32, y + 35 + w(4, 3)], [x - 20, y + 37 + w(5, 3)], [x - 26, y + 44 + w(6, 3)], [x - 12, y + 41 + w(7, 2)], [x - 12, y + 49 + w(8, 2)], [x + 2, y + 42 + w(9, 2)], [x + 10, y + 49], [x + 14, y + 38], [x + 25, y + 31], [x + 23, y + 19]]
+    : [[x + 9, y + 19], [x - 8, y + 21 + w(0, 1)], [x - 22, y + 26 + w(1, 2)], [x - 32, y + 32 + w(2, 3)], [x - 24, y + 38 + w(3, 3)], [x - 10, y + 38 + w(4, 3)], [x + 2, y + 41 + w(5, 2)], [x + 14, y + 37], [x + 25, y + 31], [x + 23, y + 19]];
+  p.poly(pts, c2);
+  p.poly(inset(pts, 1.6), c1);
+  p.poly(inset(pts, 5), mix(c1, "#ffffff", 0.12));
+}
+
+function superCat(p: Pen, x: number, y: number, f: number, T: number, villain: boolean): void {
+  const su = villain ? SUIT_VILLAIN : SUIT_HERO;
+  const cape1 = villain ? "#5a1a8a" : "#d6202a", cape2 = villain ? "#e0284a" : "#ff6a5a";
+  capeShape(p, x, y, T, villain, cape1, cape2);
+  // arms (behind the head, in front of the cape)
+  const lift = Math.round(Math.sin(T * 2) * 1);
+  p.thick(x + 27, y + 23, x + 36, y + 9 + lift, 3, su.s, NAVY);
+  p.r(x + 34, y + 5 + lift, 5, 5, "#f59a3c"); p.r(x + 34, y + 5 + lift, 5, 1, NAVY); p.r(x + 34, y + 9 + lift, 5, 1, NAVY); p.r(x + 33, y + 5 + lift, 1, 5, NAVY); p.r(x + 39, y + 5 + lift, 1, 5, NAVY);
+  p.thick(x + 5, y + 23, x - 2, y + 31, 3, su.s, NAVY);
+  p.r(x - 5, y + 30, 5, 5, "#f59a3c"); p.r(x - 5, y + 34, 5, 1, NAVY); p.r(x - 6, y + 30, 1, 5, NAVY); p.r(x - 5, y + 29, 5, 1, NAVY);
+  const pulse = f % 12 < 6;
+  cat(p, x, y, {
+    s: 2, eyes: "open", blush: !villain,
+    pal: { S: su.s, T: su.t, G: su.g, E: su.e, M: su.m, B: su.b, R: pulse ? "#ff2a2a" : "#ff7a3a", F: "#ffffff", w: "#ffffff" },
+    fix: (g) => {
+      for (let j = 10; j <= 14; j++) for (let i = 1; i <= 14; i++) { if (g[j][i] === "a") g[j][i] = "S"; else if (g[j][i] === "b") g[j][i] = "T"; else if (g[j][i] === "w") g[j][i] = "B"; }
+      for (let i = 2; i <= 13; i++) if (g[13][i] === "S") g[13][i] = "G";
+      g[11][7] = "E"; g[11][8] = "E"; for (let i = 6; i <= 9; i++) g[12][i] = "E";
+      for (const j of [5, 6]) for (const i of [2, 3, 4, 5, 10, 11, 12, 13]) if (g[j][i] !== "e") g[j][i] = "M";
+      if (villain) {
+        g[5][4] = "R"; g[6][4] = "R"; g[5][11] = "R"; g[6][11] = "R";
+        for (const i of [4, 5, 10, 11]) g[4][i] = "M";
+        g[8][5] = "m"; g[8][6] = "F"; g[8][7] = "m"; g[8][8] = "m"; g[8][9] = "F"; g[8][10] = "m";
+      } else {
+        g[4][3] = "M"; g[4][12] = "M"; g[4][4] = "M"; g[4][11] = "M";
+        g[7][5] = "m"; g[7][10] = "m"; for (let i = 6; i <= 9; i++) g[8][i] = "m"; g[8][7] = "w"; g[8][8] = "w";
+      }
+    },
+  });
+}
+
+function villainCat(p: Pen, f: number): void {
+  const T = (f * Math.PI * 2) / 240;
+  p.r(0, 0, 60, 80, "#05030f");
+  for (let y = 0; y < 80; y++) for (let x = 0; x < 60; x++) {
+    const n = vnoise(x * 0.11 + 3, y * 0.11 + 7);
+    if (n > 0.64) p.p(x, y, n > 0.74 ? "#241046" : "#170a30");
+  }
+  starDrift(p, f, 0, 76);
+  // ---- the black hole: glow, lensed halo, event horizon, accretion disk
+  const cx = 30, cy = 34, R0 = 12;
+  for (let y = 0; y < 80; y++) for (let x = 0; x < 60; x++) {
+    const dx = x + 0.5 - cx, dy = y + 0.5 - cy, r = Math.hypot(dx, dy);
+    const ex = dx / 30, ey = dy / 6.5, e = Math.hypot(ex, ey);
+    const ang = Math.atan2(ey, ex);
+    const inDisk = e > 0.4 && e < 1;
+    const front = dy > 0;
+    if (r < R0 && !(inDisk && front)) { p.p(x, y, "#000000"); continue; }
+    if (inDisk) {
+      const t = (e - 0.4) / 0.6;
+      const swirl = Math.sin(ang * 4 - T * 4 - e * 12) * 0.5 + 0.5;
+      const lvl = Math.round(swirl * 3) / 3;
+      const base = t < 0.2 ? mix("#fff6d0", "#ffc04a", t / 0.2) : t < 0.5 ? mix("#ffc04a", "#ff6a30", (t - 0.2) / 0.3) : t < 0.8 ? mix("#ff6a30", "#c0307a", (t - 0.5) / 0.3) : mix("#c0307a", "#4a2088", (t - 0.8) / 0.2);
+      p.p(x, y, mix("#000000", base, 0.55 + lvl * 0.45));
+      continue;
+    }
+    if (r >= R0 && r < R0 + 2) { p.p(x, y, dy < 0 ? "#ffd78a" : "#ff9a50"); continue; }
+    if (dy < 0 && r >= R0 + 3 && r < R0 + 4.6) { p.p(x, y, "#c0307a"); continue; }
+    if (r >= R0 + 2 && r < R0 + 8 && (x + y) % 2 === 0 && vnoise(x * 0.3, y * 0.3) > 0.45) p.p(x, y, "#3a1066");
+  }
+  // matter spiralling into the hole
+  for (let i = 0; i < 18; i++) {
+    const life = ((f + i * 7) % 120) / 120, r = 30 * (1 - life) + 8, a = i * 2.4 + life * 7;
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r * 0.28;
+    if (Math.hypot(x - cx, (y - cy) * 3.4) < R0 - 1 && y < cy) continue;
+    p.p(x, y, life < 0.5 ? "#ffcf90" : life < 0.8 ? "#ff8a50" : "#c0307a");
+  }
+  // ---- the villain
+  const bob = Math.round(Math.sin(T * 2) * 2);
+  superCat(p, 14, 36 + bob, f, T, true);
+  // dark energy orb in the raised paw
+  const ox = 14 + 36.5, oy = 36 + bob + 1, k = f % 8;
+  p.ell(ox, oy, 6 + (k < 4 ? 1 : 0), 6 + (k < 4 ? 1 : 0), "#3a0f5a");
+  p.ell(ox, oy, 4.5, 4.5, "#7a1fb0"); p.ell(ox, oy, 3, 3, "#d03a8a"); p.ell(ox, oy, 1.6, 1.6, "#ffe0f0");
+  for (let j = 0; j < 4; j++) {
+    const a = hs(f * 3 + j * 11) * Math.PI * 2, r1 = 6 + hs(f + j) * 4;
+    if ((f + j) % 3 !== 0) p.line(ox + Math.cos(a) * 5, oy + Math.sin(a) * 5, ox + Math.cos(a) * r1, oy + Math.sin(a) * r1, j % 2 ? "#ff5a8a" : "#c58cff");
+  }
+}
+
+function heroCat(p: Pen, f: number): void {
+  const T = (f * Math.PI * 2) / 240;
+  for (let y = 0; y < 80; y++) p.r(0, y, 60, 1, mix("#04061a", "#0c1450", y / 60));
+  starDrift(p, f, 0, 40);
+  // the sun's glare
+  const pu = 0.5 + 0.5 * Math.sin(T * 4), sx = 52, sy = 11;
+  p.ell(sx, sy, 5, 5, "#3a4a9a"); p.ell(sx, sy, 3.5, 3.5, "#ffe9a0"); p.ell(sx, sy, 2, 2, "#ffffff");
+  for (let i = 1; i <= 4 + Math.round(pu * 3); i++) { const c = i < 3 ? "#ffffff" : "#bcd0ff"; p.p(sx - 2 - i, sy, c); p.p(sx + 2 + i, sy, c); p.p(sx, sy - 2 - i, c); p.p(sx, sy + 2 + i, c); }
+  // big Earth behind the hero (night-side city lights, drifting clouds)
+  const ecx = 30, ecy = 62, R = 34, rot = f * 0.03, L = [-0.55, -0.55, 0.62];
+  p.ell(ecx, ecy, R + 3, R + 3, "#1a3a8a"); p.ell(ecx, ecy, R + 2, R + 2, "#4a9ae8"); p.ell(ecx, ecy, R + 1, R + 1, "#7fd0ff");
+  for (let y = Math.floor(ecy - R); y <= Math.ceil(ecy + R); y++) {
+    if (y < 0 || y >= 80) continue;
+    for (let x = 0; x < 60; x++) {
+      const nx = (x + 0.5 - ecx) / R, ny = (y + 0.5 - ecy) / R, d2 = nx * nx + ny * ny;
+      if (d2 > 1) continue;
+      const nz = Math.sqrt(1 - d2), lat = Math.asin(ny), lon = Math.atan2(nx, nz) + rot;
+      const land = vnoise(lon * 2.1 + 3, lat * 2.4 + 5) * 0.65 + vnoise(lon * 4.2, lat * 4.8) * 0.35;
+      let col = land > 0.55 ? (land > 0.66 ? "#2e7d32" : "#4caf50") : "#2f6fd6";
+      if (vnoise(lon * 3.2 + 40 + rot * 0.8, lat * 5.5 + 7) > 0.62) col = mix(col, "#ffffff", 0.88);
+      const lam = Math.max(0, nx * L[0] + ny * L[1] + nz * L[2]);
+      let out = mix("#050a1e", col, Math.round((0.3 + 0.7 * lam) * 4) / 4);
+      if (lam < 0.12 && land > 0.55 && hs(x * 7 + y * 13) > 0.86) out = "#ffd86a";
+      p.p(x, y, out);
+    }
+  }
+  const bob = Math.round(Math.sin(T * 2) * 2);
+  superCat(p, 14, 22 + bob, f, T, false);
+  // golden glints around the hero
+  if (f % 20 < 3) spark(p, 9, 18, "#fff3b0"); if ((f + 9) % 26 < 3) spark(p, 50, 34, "#ffe27a"); if ((f + 14) % 30 < 3) spark(p, 8, 52, "#ffffff");
+}
+
+// ================================================================ SCENE 8: Sleepy Cat (bird's-eye bedroom, one full day in 40 s)
+// 400 frames = morning, noon, evening, night (100 frames each, cross-fading). The window light patch on the floor and bed moves with the sun.
+type TK = { skyT: string; skyB: string; amb: string; ambA: number; lit: string; litA: number; skew: number; len: number; bx: number; by: number; bcol: string; br: number; lamp: number; stars: number; moon: number };
+const SLEEP_KEYS: TK[] = [
+  { skyT: "#8ec9ff", skyB: "#ffc58a", amb: "#ffcf9a", ambA: 0.14, lit: "#fff0c0", litA: 0.42, skew: 0.55, len: 40, bx: 13, by: 9, bcol: "#ffe7a0", br: 2.6, lamp: 0, stars: 0, moon: 0 },
+  { skyT: "#4aa8ff", skyB: "#bfe8ff", amb: "#ffffff", ambA: 0, lit: "#ffffff", litA: 0.36, skew: 0, len: 28, bx: 20, by: 3, bcol: "#fff6b0", br: 3, lamp: 0, stars: 0, moon: 0 },
+  { skyT: "#5a2a8a", skyB: "#ff7a4a", amb: "#ff8a5a", ambA: 0.3, lit: "#ff9a50", litA: 0.45, skew: -0.6, len: 42, bx: 27, by: 9, bcol: "#ff6a3a", br: 3, lamp: 0.35, stars: 0, moon: 0 },
+  { skyT: "#070b2a", skyB: "#1c2260", amb: "#16205a", ambA: 0.5, lit: "#9ab4ff", litA: 0.24, skew: 0.15, len: 32, bx: 24, by: 5, bcol: "#f4f0d0", br: 2.6, lamp: 1, stars: 1, moon: 1 },
+];
+const sm = (t: number): number => { const c = Math.max(0, Math.min(1, t)); return c * c * (3 - 2 * c); };
+function dayKey(f: number): TK {
+  const u = (f % 400) / 100, i = Math.floor(u) % 4, t = sm(((u - i) - 0.55) / 0.45);
+  const a = SLEEP_KEYS[i], b = SLEEP_KEYS[(i + 1) % 4];
+  const n = (k: keyof TK): number => lerp(a[k] as number, b[k] as number, t), c = (k: keyof TK): string => mix(a[k] as string, b[k] as string, t);
+  return { skyT: c("skyT"), skyB: c("skyB"), amb: c("amb"), ambA: n("ambA"), lit: c("lit"), litA: n("litA"), skew: n("skew"), len: n("len"), bx: n("bx"), by: n("by"), bcol: c("bcol"), br: n("br"), lamp: n("lamp"), stars: n("stars"), moon: n("moon") };
+}
+
+class LitPen extends Pen {
+  sh: (x: number, y: number, col: string) => string;
+  constructor(c: Ctx, sh: (x: number, y: number, col: string) => string) { super(c); this.sh = sh; }
+  r(x: number, y: number, w: number, h: number, col: string): void {
+    if (w <= 0 || h <= 0) return;
+    const x0 = Math.round(x), y0 = Math.round(y);
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      const X = x0 + i, Y = y0 + j;
+      if (X < 0 || Y < 0 || X >= SCENE_W || Y >= SCENE_H) continue;
+      this.c.fillStyle = this.sh(X, Y, col); this.c.fillRect(X, Y, 1, 1);
+    }
+  }
+}
+
+const ZG: string[][] = [["XXX", ".X.", "XXX"], ["XXXX", "..X.", ".X..", "XXXX"], ["XXXXX", "...X.", "..X..", ".X...", "XXXXX"]];
+function zed(p: Pen, x: number, y: number, size: number): void {
+  const g = ZG[size];
+  for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) p.bmp(x + ox, y + oy, g, { X: "#2a1b33" });
+  p.bmp(x, y, g, { X: "#ffffff" });
+}
+
+function sleepyCat(p: Pen, f: number): void {
+  const K = dayKey(f);
+  const WIN = { x0: 9, x1: 31, y0: 2, y1: 11 };       // window on the back wall
+  const WALL_B = 14;                                    // wall meets floor
+  // ---- light: ambient tint, window light patch (with window bars), warm lamp glow
+  const shade = (x: number, y: number, col: string): string => {
+    let c = mix(col, K.amb, K.ambA);
+    if (y >= WALL_B) {
+      const u = (x - K.skew * (y - WALL_B) - 11) / 18, v = (y - WALL_B) / K.len;
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && Math.abs(u - 0.5) > 0.045 && Math.abs(v - 0.4) > 0.035) c = mix(c, K.lit, K.litA * (1 - 0.55 * v));
+    }
+    if (K.lamp > 0.01) { const d = Math.hypot(x - 55, y - 49); if (d < 17) c = mix(c, "#ffd890", K.lamp * 0.5 * Math.pow(1 - d / 17, 1.2)); }
+    return c;
+  };
+  const q = new LitPen(p.c, shade);
+
+  // ---- wall, window, curtains, picture
+  q.r(0, 0, 60, WALL_B, "#e8d8c8");
+  for (let x = 0; x < 60; x += 4) q.r(x, 0, 1, WALL_B, "#dccbb8");
+  p.r(WIN.x0 - 1, WIN.y0 - 1, 24, 11, "#7a4a28");
+  for (let y = WIN.y0; y <= WIN.y1 - 1; y++) p.r(WIN.x0, y, 22, 1, mix(K.skyT, K.skyB, (y - WIN.y0) / 8));
+  if (K.stars > 0.3) for (let i = 0; i < 9; i++) { const sx = WIN.x0 + 1 + hs(i + 3) * 20, sy = WIN.y0 + hs(i + 9) * 5; if ((f + i * 5) % 16 < 12) p.p(sx, sy, "#ffffff"); }
+  const inWin = (x: number, y: number): boolean => x >= WIN.x0 && x < WIN.x0 + 22 && y >= WIN.y0 && y < WIN.y1;
+  for (let y = Math.floor(K.by - 4); y <= Math.ceil(K.by + 4); y++) for (let x = Math.floor(K.bx - 4); x <= Math.ceil(K.bx + 4); x++) {
+    if (!inWin(x, y)) continue;
+    const d = Math.hypot(x + 0.5 - K.bx, y + 0.5 - K.by);
+    if (d <= K.br) { const cut = K.moon > 0.5 && Math.hypot(x + 0.5 - K.bx - 1.4, y + 0.5 - K.by + 0.6) < K.br * 0.85; p.p(x, y, cut ? mix(K.skyT, K.skyB, (y - WIN.y0) / 8) : K.bcol); }
+    else if (d <= K.br + 1.2 && K.moon < 0.5) p.p(x, y, mix(K.bcol, K.skyB, 0.6));
+  }
+  if (K.stars < 0.6) { const cx = ((f * 0.1) % 40) - 8; for (const [dx, dy, w] of [[0, 2, 7], [2, 1, 4], [-1, 3, 6]]) for (let i = 0; i < w; i++) if (inWin(cx + dx + i, WIN.y0 + dy + 1)) p.p(cx + dx + i, WIN.y0 + dy + 1, mix("#ffffff", K.skyB, 0.25 + K.stars * 0.5)); }
+  for (let x = WIN.x0; x < WIN.x0 + 22; x++) p.p(x, WIN.y1 - 1 - ((x * 7) % 5 < 2 ? 1 : 0) - (x % 9 === 0 ? 1 : 0), mix("#3a2a50", K.skyB, 0.3));
+  p.r(WIN.x0 + 10, WIN.y0, 1, 9, "#7a4a28"); p.r(WIN.x0, WIN.y0 + 4, 22, 1, "#7a4a28");
+  q.r(5, 0, 4, 12, "#f08ab0"); q.r(31, 0, 4, 12, "#f08ab0"); q.r(7, 0, 1, 12, "#d4669a"); q.r(33, 0, 1, 12, "#d4669a");
+  q.r(40, 3, 12, 9, "#7a4a28"); q.r(41, 4, 10, 7, "#cfe9ff");
+  q.bmp(42, 6, ["..XX....X.", ".XXXX..XX.", "XXXXXXXXX.", ".XXXX..XX.", "..XX....X."], { X: "#3a7ad0" });
+  q.r(0, WALL_B - 2, 60, 2, "#8a5a3a");
+  // ---- wooden floor, rug
+  for (let y = WALL_B; y < 80; y++) {
+    const row = Math.floor((y - WALL_B) / 4), seam = Math.floor(hs(row * 3.7) * 30) + 8;
+    for (let x = 0; x < 60; x++) {
+      const edge = (y - WALL_B) % 4 === 3 || (x + seam) % 30 === 0;
+      q.p(x, y, edge ? "#8a5a30" : row % 2 ? "#c08a54" : "#b47c48");
+    }
+  }
+  q.ell(16, 76, 17, 5, "#8a3a6a"); q.ell(16, 76, 15, 4, "#e0709a"); q.ell(16, 76, 9, 2, "#f6a4c0");
+  q.ellO(46, 75, 4, 2, "#e0554a", "#7a2a22"); q.ell(46, 75, 2.6, 1.2, "#8a5a2a");
+  q.bmp(34, 74, [".XXXX..X", "XXXXXXXX", ".XXXX..X"], { X: "#5ab0e8" }); q.p(36, 75, "#ffffff");
+  // ---- nightstand with lamp and alarm clock
+  q.r(50, 40, 10, 22, "#6a3a1c"); q.r(51, 41, 8, 20, "#9a6a3a"); q.r(51, 41, 8, 1, "#b88a52");
+  q.ellO(55, 47, 3, 3, mix("#f4d9a0", "#fff2b0", K.lamp), "#7a5a2a"); q.ell(55, 47, 1.4, 1.4, mix("#ffe7a8", "#ffffff", K.lamp));
+  q.ellO(55, 56, 3, 3, "#ffffff", "#2a1b33");
+  const ha = (Math.floor((f % 400) / 100) * 0.5 + 0.2) * Math.PI;
+  q.line(55, 56, 55 + Math.cos(ha) * 2, 56 + Math.sin(ha) * 2, "#2a1b33"); q.line(55, 56, 55, 54, "#e0402a");
+  // ---- bed: frame, sheet, pillow
+  q.r(3, 14, 46, 57, "#6a3a1c"); q.r(4, 15, 44, 55, "#7a4a28"); q.r(3, 14, 46, 5, "#8a5a30"); q.r(3, 14, 46, 1, "#b88a52");
+  q.r(6, 19, 40, 48, "#dfe6ff"); q.r(6, 19, 40, 1, "#c4cef0");
+  q.ellO(26, 30, 17, 10, "#fdfbff", "#aab4d8");
+  // ---- the sleeping cat: only the head is above the blanket
+  const breath = (Math.sin((f * Math.PI * 2) / 50) + 1) / 2;
+  cat(q, 10, 18, {
+    s: 2, eyes: "blink", blush: true, mouth: 1,
+    fix: (g) => {
+      for (let j = 10; j <= 15; j++) for (let i = 0; i < 16; i++) g[j][i] = ".";
+      for (const ex of [4, 11]) { g[5][ex] = "a"; g[6][ex - 1] = "e"; g[6][ex] = "e"; g[6][ex + 1] = "e"; }
+    },
+  });
+  // ---- blanket with star pattern, folded cuff, a mound that rises and falls
+  q.r(5, 39, 42, 28, "#4a7fd0"); q.ell(26, 66, 21, 2, "#4a7fd0"); q.r(5, 39, 1, 28, "#3a68b0"); q.r(46, 39, 1, 28, "#3a68b0"); q.r(5, 66, 42, 1, "#3a68b0");
+  q.ell(26, 53 - breath * 0.6, 14, 10 + breath * 0.8, "#5a90e0"); q.ell(26, 52 - breath * 0.6, 10, 6, "#6a9ff0");
+  for (let i = 0; i < 14; i++) { const sx = 8 + Math.floor(hs(i * 2 + 1) * 36), sy = 46 + Math.floor(hs(i * 2 + 2) * 19); q.p(sx, sy, "#cfe0ff"); if (i % 3 === 0) { q.p(sx - 1, sy, "#a8c4f4"); q.p(sx + 1, sy, "#a8c4f4"); q.p(sx, sy - 1, "#a8c4f4"); q.p(sx, sy + 1, "#a8c4f4"); } }
+  q.r(5, 39, 42, 5, "#9fc0f4"); q.r(5, 43, 42, 1, "#6f94d8"); q.r(5, 39, 42, 1, "#c8dcff");
+  q.line(9, 50, 14, 62, "#3a68b0"); q.line(43, 50, 38, 62, "#3a68b0");
+  // paws resting on the blanket, feet peeking out at the bottom
+  const py = 42 + Math.round(breath * 0.8);
+  for (const px of [14, 38]) { q.ellO(px, py + 1, 3, 2.4, "#f59a3c", NAVY); q.p(px - 1, py + 2, "#d9731f"); q.p(px + 1, py + 2, "#d9731f"); }
+  for (const px of [19, 33]) { q.ellO(px, 66, 3, 2, "#f59a3c", NAVY); q.p(px - 1, 66, "#ff8fa3"); q.p(px, 65, "#ff8fa3"); q.p(px + 1, 66, "#ff8fa3"); }
+  q.r(3, 69, 46, 2, "#5a3016");
+  // ---- zzzZZZ rising from the sleeper
+  for (let k = 0; k < 3; k++) {
+    const a = ((f + k * 18) % 54) / 54;
+    if (a > 0.92) continue;
+    zed(p, 44 + a * 12 + Math.sin(a * 6 + k) * 1.5, 30 - a * 17, a < 0.34 ? 0 : a < 0.67 ? 1 : 2);
+  }
+}
+
 // ================================================================ public API
-const DRAW: Record<string, (p: Pen, f: number) => void> = { donut_cafe: donutScene, moon_walk: moonWalk, blossom_pair: blossomPair, crazy_rich: crazyRich, surf_cat: surfCat };
-export const SCENE_LOOP: Record<string, number> = { donut_cafe: 48, moon_walk: 150, blossom_pair: 200, crazy_rich: 240, surf_cat: 200 };
+const DRAW: Record<string, (p: Pen, f: number) => void> = { donut_cafe: donutScene, moon_walk: moonWalk, blossom_pair: blossomPair, crazy_rich: crazyRich, surf_cat: surfCat, villain_cat: villainCat, hero_cat: heroCat, sleepy_cat: sleepyCat };
+export const SCENE_LOOP: Record<string, number> = { donut_cafe: 48, moon_walk: 150, blossom_pair: 200, crazy_rich: 240, surf_cat: 200, villain_cat: 240, hero_cat: 240, sleepy_cat: 400 };
 /** Frame shown when animation is off (reduced motion). */
-export const SCENE_POSTER: Record<string, number> = { donut_cafe: 20, moon_walk: 12, blossom_pair: 12, crazy_rich: 8, surf_cat: 14 };
+export const SCENE_POSTER: Record<string, number> = { donut_cafe: 20, moon_walk: 12, blossom_pair: 12, crazy_rich: 8, surf_cat: 14, villain_cat: 20, hero_cat: 20, sleepy_cat: 10 };
 
 export function drawScene(id: string, ctx: Ctx, frame: number, silhouette = false): void {
   const p = new Pen(ctx);

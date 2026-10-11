@@ -89,3 +89,9 @@ Run `supabase/stage12.sql` once (after stage11), then restart `npm run dev`.
 - "MV Pack 2" costs 1 BLUE voucher per opening, "MV Pack Collector" costs 1 GOLD voucher (matched by name; they no longer cost coins).
 - `/admin > Toko & harga`: every pack has a "Pembayaran" choice (Gratis / Voucher biru / Voucher emas / Coin) and an amount, so the cost per opening can be changed any time.
 - Vouchers are bought in the SHOP with coins. The voucher is taken in the same transaction that saves the cards.
+
+## Stage 15: ABSOLUTE costumes + blink / nod animation
+Run `supabase/stage15.sql` once in the SQL Editor, then restart `npm run dev`.
+- Every ABSOLUTE card gets a new anime-inspired costume (the cat's fur and eye colour stay), and a new name without "Absolute" in front:
+  Akatsuki Cloud Cat, Jujutsu Sorcerer Cat, Soul Reaper Captain Cat, Straw Hat Captain Cat, Super Saiyan Warrior Cat, Scout Regiment Cat, Caped Baldy Hero Cat, Demon Slayer Corps Cat, State Alchemist Cat.
+- Cards with `sprite_data.anim = true` blink and nod their head (`src/lib/sprite.ts`, `src/components/Sprite.tsx`). Other cards are unchanged.

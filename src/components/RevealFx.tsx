@@ -8,7 +8,7 @@ export const FX: Partial<Record<TierKey, { title: string; sub: string; ms: numbe
   S_PLUS: { title: "ULTRA RARE", sub: "S+ · MYTHIC", ms: 1800, quake: "quake", cls: "fxSp" },
   PRIME: { title: "PRIME", sub: "◆ DIAMOND CLASS ◆", ms: 2500, quake: "quake2", cls: "fxPr" },
   ABSOLUTE: { title: "ABSOLUTE", sub: "♛ THE CROWN BURNS ♛", ms: 3200, quake: "quake3", cls: "fxAb" },
-  COLLECTOR: { title: "COLLECTOR", sub: "✦ ANIMATED SCENE CARD ✦", ms: 4200, quake: "quakeCo", cls: "fxCo" },
+  COLLECTOR: { title: "COLLECTOR", sub: "✦ TRUE CAT COLLECTOR ✦", ms: 4200, quake: "quakeCo", cls: "fxCo" },
 };
 
 const n = (k: number, m: number) => (k * 37 + 11) % m;

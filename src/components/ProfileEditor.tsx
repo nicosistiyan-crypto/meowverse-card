@@ -18,6 +18,8 @@ export default function ProfileEditor({ username, avatarUrl, bio, border, claime
   const [busy, setBusy] = useState(false);
   const [eq, setEq] = useState<string | null>(border);
   const [sel, setSel] = useState<number[]>(showcase);
+  const [toast, setToast] = useState("");
+  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 3000); return () => clearTimeout(t); }, [toast]);
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -33,7 +35,7 @@ export default function ProfileEditor({ username, avatarUrl, bio, border, claime
     setBusy(true); setMsg("");
     const r = await fetch("/api/profile/bio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bio: text }) });
     setMsg(r.ok ? "Bio disimpan." : (await r.json().catch(() => ({}))).error ?? "Gagal menyimpan.");
-    setBusy(false); if (r.ok) router.refresh();
+    setBusy(false); if (r.ok) { setToast("Bio berhasil disimpan!"); router.refresh(); }
   }
   async function equip(b: BorderKey | null) {
     setBusy(true); setMsg("");
@@ -54,7 +56,7 @@ export default function ProfileEditor({ username, avatarUrl, bio, border, claime
     const r = await fetch("/api/profile/showcase", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: sel }) });
     const d = await r.json().catch(() => ({}));
     setMsg(r.ok ? "Pameran disimpan." : d.error ?? "Gagal menyimpan pameran.");
-    setBusy(false); if (r.ok) router.refresh();
+    setBusy(false); if (r.ok) { setToast("Pameran berhasil disimpan!"); router.refresh(); }
   }
   // arriving from the Claim menu (/profile?new=..#border): bring the border section into view
   useEffect(() => { const h = window.location.hash; if (h === "#border" || h === "#pameran") document.getElementById(h.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }); }, []);
@@ -104,6 +106,7 @@ export default function ProfileEditor({ username, avatarUrl, bio, border, claime
         </div>); })}</div>
         : <div className="empty">Kamu belum punya kartu untuk dipajang.</div>}
       {msg && <p className="msg" role="status">{msg}</p>}
+      {toast && <div className="toast-ok" role="status" aria-live="polite">✔ {toast}</div>}
     </>
   );
 }

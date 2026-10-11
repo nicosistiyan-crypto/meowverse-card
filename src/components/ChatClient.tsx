@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import Avatar from "./Avatar";
+import AdminBadge from "./AdminBadge";
 import type { ChatMsg, ChatPeer, Conv } from "@/lib/types";
 
 const MAX = 300;
@@ -147,7 +148,7 @@ export default function ChatClient({ initialConvs, initialOpen }: { initialConvs
               <button key={key} className={"wa-item" + (active === key ? " on" : "") + (c.unread ? " un" : "")} style={{ animationDelay: `${Math.min(i, 9) * 0.045}s` }} onClick={() => { setErr(""); setActive(key); }}>
                 {c.who ? <Avatar url={c.avatarUrl} border={c.border} name={c.who} size={46} /> : <span className="wa-sys" aria-hidden>🔔</span>}
                 <span className="wa-mid">
-                  <span className="wa-name">{c.who ? "@" + c.who : "SISTEM"}</span>
+                  <span className="wa-name">{c.who ? "@" + c.who : "SISTEM"}<AdminBadge name={c.who} /></span>
                   <span className="wa-prev">{c.mine && <em>Kamu: </em>}{c.last}</span>
                 </span>
                 <span className="wa-meta"><time>{listTime(c.at)}</time>{c.unread > 0 && <i className="wa-bd">{c.unread > 9 ? "9+" : c.unread}</i>}</span>
@@ -166,20 +167,19 @@ export default function ChatClient({ initialConvs, initialOpen }: { initialConvs
             <header className="wa-head">
               <button className="wa-back" aria-label="Kembali" onClick={() => setActive(null)}>◀</button>
               {active === SYS ? <span className="wa-sys" aria-hidden>🔔</span> : <Avatar url={peer?.avatarUrl} border={peer?.border} name={active} size={40} />}
-              <span className="wa-hm"><b>{title}</b>{active === SYS ? <small>pemberitahuan game</small> : <small><Link prefetch={false} href={`/u/${active}`}>lihat profil</Link></small>}</span>
+              <span className="wa-hm"><b>{title}{active !== SYS && <AdminBadge name={active} />}</b>{active === SYS ? <small>pemberitahuan game</small> : <small><Link prefetch={false} href={`/u/${active}`}>lihat profil</Link></small>}</span>
             </header>
             <div className="wa-body" ref={scroller} onScroll={onScroll}>
               {!loaded && <div className="wa-load"><i /><i /><i /></div>}
               {loaded && rows.length === 0 && <div className="wa-hello">Belum ada pesan.<br />Ketik sesuatu untuk menyapa {title} 👋</div>}
               {rows.map((m, i) => {
                 const dk = dayKey(m.at), sep = dk !== lastDay; lastDay = dk;
-                const lastOfGroup = i === rows.length - 1 || rows[i + 1].mine !== m.mine || dayKey(rows[i + 1].at) !== dk;
                 const tail = i === 0 || rows[i - 1].mine !== m.mine || sep;
                 return (
                   <div key={m.id} className="wa-r">
                     {sep && <div className="wa-day"><span>{dayLabel(m.at)}</span></div>}
                     <div className={"wa-line " + (m.mine ? "me" : "them")}>
-                    {!m.mine && active !== SYS && (lastOfGroup ? <span className="wa-av"><Avatar url={peer?.avatarUrl} border={peer?.border} name={active} size={34} /></span> : <span className="wa-av sp" aria-hidden />)}
+                    {!m.mine && active !== SYS && (tail ? <span className="wa-av" style={{ alignSelf: "flex-start" }}><Avatar url={peer?.avatarUrl} border={peer?.border} name={active} size={34} /></span> : <span className="wa-av sp" aria-hidden />)}
                     <div className={"wa-b " + (m.mine ? "me" : "them") + (tail ? " tl" : "") + (fresh.has(m.id) ? " new" : "")} style={loaded && fresh.size === 0 ? { animationDelay: `${Math.min(i, 12) * 0.03}s` } : undefined}>
                       <span className="wa-tx">{m.body}</span>
                       <span className="wa-tm">{hhmm(m.at)}{m.mine && <em className={m.pending ? "pd" : m.read ? "rd" : ""}>{m.pending ? "◔" : m.read ? "✓✓" : "✓"}</em>}</span>
