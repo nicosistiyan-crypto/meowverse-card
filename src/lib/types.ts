@@ -36,6 +36,15 @@ export type Conv = { who: string | null; last: string; at: string; unread: numbe
 // The other player's profile picture and claimed border, shown next to their messages.
 export type ChatPeer = { avatarUrl: string | null; border: string | null };
 export type ChatMsg = { id: number; mine: boolean; body: string; at: string; read: boolean };
+// Inbox messages and system notifications.
+export type Msg = {
+  id: number;
+  who: string | null;
+  body: string;
+  at: string;
+  unread: boolean;
+  kind: string;
+};
 
 // What a card sells for, in coins, by tier (Sell menu).
 export const SELL_PRICE: Record<TierKey, number> = { C: 10, B: 25, A: 80, S: 250, S_PLUS: 700, PRIME: 3000, ABSOLUTE: 10000, COLLECTOR: 50000 };
