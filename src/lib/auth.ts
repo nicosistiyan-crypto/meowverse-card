@@ -1,7 +1,9 @@
 import "server-only";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { cache } from "react";
 import { db } from "./db";
+import { timed } from "./perf";
 
 export const COOKIE = "pc_session";
 const TTL_MS = 1000 * 60 * 60 * 24 * 14;
@@ -27,18 +29,21 @@ export async function createSession(userId: string) {
   });
 }
 
-export async function getUser(): Promise<SessionUser | null> {
+// cache() = hasil dipakai ulang HANYA di dalam satu request (layout + halaman + komponen server yang memanggil getUser
+// tidak lagi masing-masing bertanya ke database). Tidak dibagi antar request / antar pengguna; setiap request tetap
+// memeriksa cookie sesi dan database seperti sebelumnya.
+export const getUser = cache(async (): Promise<SessionUser | null> => {
   const token = cookies().get(COOKIE)?.value;
   if (!token) return null;
-  const { data } = await db
+  const { data } = await timed("auth.getUser", () => db
     .from("sessions")
     .select("expires_at, users(id, username, role, active)")
     .eq("token_hash", sha(token))
-    .maybeSingle();
+    .maybeSingle());
   const u = (data as any)?.users as SessionUser | undefined;
   if (!data || !u || new Date(data.expires_at) < new Date() || !u.active) return null;
   return u;
-}
+});
 
 export async function destroySession() {
   const token = cookies().get(COOKIE)?.value;

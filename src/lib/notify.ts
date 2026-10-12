@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "./db";
-import { BORDERS, isBorder, type Conv, type ChatMsg, type ChatPeer } from "./types";
+import { BORDERS, REWARDS, isBorder, isReward, type Conv, type ChatMsg, type ChatPeer } from "./types";
 
 export async function pushMessage(userId: string, kind: string, body: string) {
   const { error } = await db.from("notifications").insert({ user_id: userId, kind, body: body.slice(0, 300) });
@@ -13,15 +13,44 @@ export async function syncBorders(userId: string): Promise<string[]> {
   if (error) { console.error("sync_borders:", error.message); return []; }
   const fresh = ((data ?? []) as string[]).filter(isBorder);
   for (const b of fresh) await pushMessage(userId, "border", `🎁 ${BORDERS[b].label} terbuka! Buka menu CLAIM untuk mengklaimnya.`);
+  await syncRewards(userId);   // semua tempat yang memanggil syncBorders (buka pack, hadiah kartu, halaman claim) ikut mengecek hadiah coin
   return fresh;
 }
 
+/** Unlocks the coin / crown rewards the player now qualifies for (stage17.sql) and tells them. Returns the newly unlocked keys. */
+export async function syncRewards(userId: string): Promise<string[]> {
+  const { data, error } = await db.rpc("sync_rewards", { p_user: userId });
+  if (error) { console.error("sync_rewards:", error.message); return []; }   // stage17.sql belum dijalankan: abaikan
+  const fresh = ((data ?? []) as string[]).filter(isReward);
+  for (const r of fresh) await pushMessage(userId, "reward", `${REWARDS[r].label} terbuka! Buka menu CLAIM untuk mengklaimnya.`);
+  return fresh;
+}
+
+/** Whether this player claimed the crown. One query when the user id is already known (crownedNames needs two). */
+export async function hasCrown(userId: string): Promise<boolean> {
+  const { data, error } = await db.from("user_rewards").select("user_id").eq("user_id", userId).eq("reward", "CROWN").not("claimed_at", "is", null).maybeSingle();
+  return !error && !!data;
+}
+
+/** Of these usernames, the ones that claimed the crown (150 cards). */
+export async function crownedNames(names: string[]): Promise<Set<string>> {
+  if (!names.length) return new Set();
+  const { data: us } = await db.from("users").select("id, username").in("username", names);
+  const ids = (us ?? []).map((u: any) => u.id as string);
+  if (!ids.length) return new Set();
+  const { data, error } = await db.from("user_rewards").select("user_id").eq("reward", "CROWN").not("claimed_at", "is", null).in("user_id", ids);
+  if (error) return new Set();
+  const ok = new Set((data ?? []).map((r: any) => r.user_id as string));
+  return new Set((us ?? []).filter((u: any) => ok.has(u.id)).map((u: any) => u.username as string));
+}
+
 export async function notifCounts(userId: string): Promise<{ unread: number; claimable: number }> {
-  const [m, b] = await Promise.all([
+  const [m, b, r] = await Promise.all([
     db.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
     db.from("user_borders").select("border", { count: "exact", head: true }).eq("user_id", userId).is("claimed_at", null),
+    db.from("user_rewards").select("reward", { count: "exact", head: true }).eq("user_id", userId).is("claimed_at", null),
   ]);
-  return { unread: m.count ?? 0, claimable: b.count ?? 0 };
+  return { unread: m.count ?? 0, claimable: (b.count ?? 0) + (r.error ? 0 : r.count ?? 0) };
 }
 
 /** One row per conversation: every player who wrote to you or got a message from you, plus the system notifications. Newest first. */

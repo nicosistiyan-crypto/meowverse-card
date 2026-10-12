@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CoinIcon from "./CoinIcon";
 import VoucherIcon from "./VoucherIcon";
+import Toast from "./Toast";
 
 type Pack = { id: number; name: string; card_count: number; pay: "free" | "coin" | "blue" | "gold"; price: number };
 
@@ -14,6 +15,7 @@ export default function AdminShop({ prices, packs }: { prices: { blue: number; g
     Object.fromEntries(packs.map((p) => [p.id, { cards: String(p.card_count), pay: p.pay, price: String(p.price) }])));
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState("");
   const n = (v: string) => Math.max(0, Math.floor(Number(v) || 0));
 
   async function save() {
@@ -24,7 +26,7 @@ export default function AdminShop({ prices, packs }: { prices: { blue: number; g
     });
     const d = await r.json().catch(() => ({}));
     setMsg(r.ok ? "Tersimpan ✔ (" + new Date().toLocaleTimeString() + ")" : d.error ?? "Gagal menyimpan.");
-    setBusy(false); if (r.ok) router.refresh();
+    setBusy(false); if (r.ok) { setToast("Toko berhasil disimpan!"); router.refresh(); }
   }
   return (
     <>
@@ -59,6 +61,7 @@ export default function AdminShop({ prices, packs }: { prices: { blue: number; g
         </div>
       ))}
       <div className="row"><button onClick={save} disabled={busy}>SIMPAN TOKO</button>{msg && <span className="msg" role="status">{msg}</span>}</div>
+      <Toast text={toast} onDone={() => setToast("")} />
     </>
   );
 }

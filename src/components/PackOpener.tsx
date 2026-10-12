@@ -4,6 +4,7 @@ import { useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import Card from "./Card";
 import PackScene from "./PackScene";
+import PackBanner from "./PackBanner";
 import RevealFx, { FX } from "./RevealFx";
 import FlipCard, { TIER_COLOR } from "./FlipCard";
 import CollectorFly, { COLLECTOR_FLY_MS } from "./CollectorFly";
@@ -13,7 +14,7 @@ import { audio } from "@/lib/audio";
 import { refreshWallet } from "@/lib/wallet";
 import { TIER, type PublicCard, type TierKey } from "@/lib/types";
 
-type Pack = { id: number; name: string; cardCount: number; coinPrice: number; voucherKind: "blue" | "gold" | null; voucherCost: number; odds: { label: string; pct: string }[] };
+type Pack = { id: number; name: string; cardCount: number; coinPrice: number; voucherKind: "blue" | "gold" | null; voucherCost: number; tiers: TierKey[] };
 type Won = PublicCard & { isNew: boolean };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // energy sparks around the pack: they gather in while it charges and burst out when it tears
@@ -92,6 +93,7 @@ export default function PackOpener({ packs, coins, blue, gold }: { packs: Pack[]
       <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}>
         {packs.map((p) => (
           <div key={p.id} className="box" style={{ width: "auto" }}>
+            <PackBanner name={p.name} tiers={p.tiers} />
             <h3>{p.name}</h3>
             <div>{p.cardCount} kartu per pack</div>
             {p.voucherKind
@@ -99,7 +101,6 @@ export default function PackOpener({ packs, coins, blue, gold }: { packs: Pack[]
               : p.coinPrice > 0
                 ? <div className="pkprice"><CoinIcon size={20} /> {p.coinPrice.toLocaleString("id-ID")} coin</div>
                 : <div className="pkprice free">GRATIS</div>}
-            <div style={{ color: "var(--mute)" }}>{p.odds.map((o) => `${o.label} ${o.pct}%`).join(" · ")}</div>
             {(() => {
               const short = p.voucherKind ? (p.voucherKind === "gold" ? gold : blue) < p.voucherCost : p.coinPrice > coins;
               return <button className="big" disabled={phase !== "idle" || short} onClick={() => open(p.id)}>{short ? (p.voucherKind ? "VOUCHER KURANG" : "COIN KURANG") : "OPEN"}</button>;

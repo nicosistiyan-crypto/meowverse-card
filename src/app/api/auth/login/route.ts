@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { createSession, limited, roleFor } from "@/lib/auth";
 import { credentials } from "@/lib/validation";
+import { syncRewards } from "@/lib/notify";
 
 // Compared against when the user does not exist, so timing does not reveal valid usernames.
 const DUMMY = bcrypt.hashSync("not-a-real-password", 12);
@@ -23,5 +24,6 @@ export async function POST(req: Request) {
   if (roleFor(username) === "SUPER_ADMIN" && user.role !== "SUPER_ADMIN")
     await db.from("users").update({ role: "SUPER_ADMIN" }).eq("id", user.id);
   await createSession(user.id);
+  await syncRewards(user.id);   // Hadiah Login 1.000 coin muncul di menu CLAIM
   return NextResponse.json({ ok: true });
 }

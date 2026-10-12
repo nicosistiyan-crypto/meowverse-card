@@ -2,22 +2,19 @@ import { redirect } from "next/navigation";
 import MeowTitle from "@/components/MeowTitle";
 import Nav from "@/components/Nav";
 import AudioDock from "@/components/AudioDock";
+import PresenceBeat from "@/components/PresenceBeat";
 import LogoutButton from "@/components/LogoutButton";
 import CoinBadge from "@/components/CoinBadge";
 import VoucherBadge from "@/components/VoucherBadge";
-import { db } from "@/lib/db";
+import { readWallet } from "@/lib/balance";
 import { getUser } from "@/lib/auth";
 import { notifCounts } from "@/lib/notify";
 
 export default async function GameLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser();
   if (!user) redirect("/login");
-  const { unread, claimable } = await notifCounts(user.id);
-  const { data: wallet } = await db.from("users").select("coins").eq("id", user.id).maybeSingle();
-  const coins = Number((wallet as any)?.coins ?? 0);
-  // read separately: the coin badge must keep working even before supabase/stage11.sql has been run
-  const { data: vch } = await db.from("users").select("blue_vouchers, gold_vouchers").eq("id", user.id).maybeSingle();
-  const blue = Number((vch as any)?.blue_vouchers ?? 0), gold = Number((vch as any)?.gold_vouchers ?? 0);
+  // notifikasi + saldo dibaca bersamaan (dulu 4 langkah beruntun); saldo & voucher kini satu query (lib/balance.ts)
+  const [{ unread, claimable }, { coins, blue, gold }] = await Promise.all([notifCounts(user.id), readWallet(user.id)]);
   return (
     <>
       <main>
@@ -34,6 +31,7 @@ export default async function GameLayout({ children }: { children: React.ReactNo
       </main>
       <Nav me={user.username} unread={unread} claimable={claimable} />
       <AudioDock />
+      <PresenceBeat />
     </>
   );
 }

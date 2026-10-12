@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import MeowTitle from "@/components/MeowTitle";
+import Toast from "@/components/Toast";
 export default function AuthForm({ mode }: { mode: "login" | "register" }) {
-  const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [toast, setToast] = useState("");
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true); setErr("");
     const f = new FormData(e.currentTarget);
@@ -10,7 +11,10 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: f.get("username"), password: f.get("password") }),
     });
-    if (r.ok) { window.location.href = "/home"; return; }
+    if (r.ok) {
+      if (mode === "login") { setToast("Login berhasil!"); setTimeout(() => { window.location.href = "/home"; }, 1000); return; }   // notifikasi tampil sebentar sebelum pindah halaman
+      window.location.href = "/home"; return;
+    }
     setErr((await r.json().catch(() => ({}))).error ?? "Something went wrong."); setBusy(false);
   }
   const reg = mode === "register";
@@ -22,6 +26,7 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
       <label>Password<input name="password" type="password" required minLength={8} autoComplete={reg ? "new-password" : "current-password"} /></label>
       {err && <p role="alert" className="err">{err}</p>}
       <button disabled={busy}>{busy ? "Please wait..." : reg ? "Register" : "Log in"}</button>
+      <Toast text={toast} onDone={() => setToast("")} />
       <a href={reg ? "/login" : "/register"}>{reg ? "Already have an account? Log in" : "New here? Create an account"}</a>
     </form>
   );

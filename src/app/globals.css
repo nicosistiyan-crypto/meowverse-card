@@ -560,3 +560,68 @@ header{flex-wrap:wrap}
 /* LOGOUT di pojok kanan atas (hanya muncul di bagian profil); wallet turun ke baris bawahnya */
 .logout-tr{order:1;margin-left:auto}
 header:has(.logout-tr) .wallet{order:2;flex-basis:100%}
+
+/* ================= penanda online: bulatan hijau di pojok avatar ================= */
+.onw{position:relative;display:inline-flex;flex:none;line-height:0}
+.onl{position:absolute;right:-3px;bottom:-3px;z-index:6;width:14px;height:14px;border-radius:50%;background:#3ddc84;border:3px solid var(--panel);box-shadow:0 0 0 2px var(--line),0 0 8px #3ddc84;animation:dotPulse 1.6s ease-in-out infinite}
+
+/* ================= gambar kemasan / box di kartu pack (menu PACK) ================= */
+/* gambar memenuhi bagian atas kotak pack sampai ke tepi (menembus padding .box 24px) */
+.pkbanner{display:block;width:calc(100% + 48px);max-width:none;margin:-24px -24px 0;height:auto;aspect-ratio:16/9;image-rendering:pixelated;border:0;border-bottom:3px solid var(--line);background:#2b1b5e}
+
+/* hadiah CLAIM: mahkota di kanan username + kartu hadiah */
+.crown{display:inline-block;margin-left:8px;vertical-align:middle;line-height:0;filter:drop-shadow(0 0 4px #ffd24a99);animation:crownGlow 2.4s ease-in-out infinite}
+@keyframes crownGlow{50%{filter:drop-shadow(0 0 9px #ffd24a)}}
+.rlist{display:grid;gap:12px;grid-template-columns:1fr}
+.rcard{border:3px solid var(--line);background:var(--panel);padding:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left}
+.rcard.off{opacity:.55}
+.rcard .rinfo{display:grid;gap:6px;min-width:0}
+.rcard .tagl{font-family:'Press Start 2P',monospace;font-size:9px;line-height:1.4}
+.rcard button{flex:none}
+
+/* ================= MOBILE LAYOUT FIXES (hanya layar HP, desktop tidak berubah) ================= */
+@media (max-width:720px){
+  html,body{max-width:100%}
+  body{overflow-x:clip}   /* clip (bukan hidden) supaya sticky .sellbar tetap jalan */
+  main{padding:12px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
+  /* nama panjang (20 karakter) tidak boleh keluar layar */
+  .prof{flex-wrap:wrap}
+  .prof>div:last-child{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}
+  .plist a{min-width:0;overflow-wrap:anywhere}
+  h2{overflow-wrap:anywhere}
+  .plinks{gap:8px 16px}
+  /* panel / popup: boleh di-scroll jika lebih tinggi dari layar pendek, tidak terpotong atas-bawah */
+  .ov{overflow-y:auto;overscroll-behavior:contain;justify-content:safe center;padding:16px 12px}
+  .panelm{max-width:100%;max-height:none}
+  .sellbar{bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+  .toast-ok{max-width:calc(100vw - 24px)}
+}
+@media (max-width:480px){
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  /* navbar bawah: semua 6 menu muat tanpa digeser */
+  nav a{flex:1 1 0;min-width:0;padding:16px 2px}
+  /* header: judul, logout, dan dompet tersusun rapi */
+  header{gap:8px 6px}
+  .wallet{gap:6px;flex-basis:100%;justify-content:flex-start;margin-left:0}
+  .vchb,.coinb{font-size:9px;padding:3px 7px 3px 4px}
+  .logout-tr{margin-left:auto}
+  /* tombol filter rarity & aksi tidak terlalu besar */
+  .row{gap:6px}
+  .row button,.lnkb{padding:9px 9px}
+  .rowr{flex-wrap:wrap;gap:6px}
+  .grid{gap:10px}
+  .box{padding:18px}
+  .pkbanner{width:calc(100% + 36px);margin:-18px -18px 0}
+  .shopc{padding:14px}
+  .bcard{padding:12px}
+  /* kartu hadiah CLAIM: susun ke bawah supaya tombol tidak menyempit */
+  .rcard{flex-direction:column;align-items:stretch;text-align:left}
+  .rcard button,.rcard .abtn{width:100%}
+  .abtn,.big{padding-left:14px;padding-right:14px}
+  .sellbar>*{flex:1 1 auto}
+  .adock{right:6px}
+}
+
+/* loading state saat pindah menu ((game)/loading.tsx): bar berjalan memakai warna tema; animasi mati otomatis di prefers-reduced-motion */
+.ldg i{width:35%;animation:ldgRun 1s ease-in-out infinite alternate}
+@keyframes ldgRun{from{transform:translateX(0)}to{transform:translateX(185%)}}

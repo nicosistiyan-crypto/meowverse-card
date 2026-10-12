@@ -5,6 +5,8 @@ import { getPublicProfile } from "@/lib/cards";
 import ShowcaseSlab from "@/components/ShowcaseSlab";
 import Avatar from "@/components/Avatar";
 import AdminBadge from "@/components/AdminBadge";
+import Crown from "@/components/Crown";
+import OnlineAvatar from "@/components/OnlineAvatar";
 
 export default async function PlayerProfile({ params }: { params: { username: string } }) {
   const me = await getUser();
@@ -17,14 +19,14 @@ export default async function PlayerProfile({ params }: { params: { username: st
   return (
     <>
       <div className="prof">
-        <Avatar url={p.avatarUrl} name={p.username} border={p.border} />
+        <OnlineAvatar online={p.online || mine}><Avatar url={p.avatarUrl} name={p.username} border={p.border} /></OnlineAvatar>
         <div>
-          <h2 style={{ margin: 0 }}>{p.username}<AdminBadge name={p.username} />{mine ? " (kamu)" : ""}</h2>
+          <h2 style={{ margin: 0 }}>{p.username}<Crown show={p.crown} size={3} /><AdminBadge name={p.username} />{mine ? " (kamu)" : ""}</h2>
           <div style={{ color: "var(--mute)" }}>{p.bio ?? "Kolektor kucing"}</div>
           {mine ? <div className="plinks"><Link prefetch={false} href="/profile">Edit profil</Link><Link prefetch={false} href="/profile#pameran">Atur pameran</Link></div> : <Link prefetch={false} href={`/gift?to=${p.username}`}>Kirim kartu</Link>}
         </div>
       </div>
-      <h2>Koleksi {p.owned.length} / {p.total}</h2>
+      <h2>Koleksi {p.ownedCount} / {p.total}</h2>
       <h2>PAMERAN ({p.showcase.length} / 12)</h2>
       {p.showcase.length ? <div className="grid">{p.showcase.map((c) => <ShowcaseSlab key={c.id} card={c} total={p.total} />)}</div>
         : <div className="empty">{mine ? "Belum ada kartu yang dipajang. Pilih lewat Atur pameran." : "Pemain ini belum memajang kartu."}</div>}

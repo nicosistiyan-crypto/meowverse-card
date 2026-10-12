@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getUser, limited } from "@/lib/auth";
 import { getFusionBonus, getFusionChances } from "@/lib/settings";
+import { syncRewards } from "@/lib/notify";
 import { FUSABLE, TIER_KEYS } from "@/lib/types";
 
 const body = z.object({ ids: z.array(z.number().int().positive()).length(3) });
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
 
   const { error } = await db.rpc("fuse_cards", { p_user: user.id, p_rows: ids, p_result: c.id });
   if (error) { console.error("fuse_cards rpc:", error); return err("Fusi gagal (kartumu tidak berubah): " + error.message, 500); }
+  await syncRewards(user.id);
   return NextResponse.json({
     upgraded: target !== tier, kind: target === tier ? "same" : target === up ? "up" : "bonus", from: tier,
     card: { id: c.id, no: c.collection_number, sprite: c.sprite_data, owned: true, name: c.name, tier: c.tier, description: c.description },

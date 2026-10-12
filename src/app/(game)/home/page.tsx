@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { getCollection } from "@/lib/cards";
-import { notifCounts } from "@/lib/notify";
+import { notifCounts, hasCrown } from "@/lib/notify";
+import Crown from "@/components/Crown";
 
 // Pixel icons drawn as SVG rects (crisp at any size), coloured by the button text.
 const CART = ["XX..........", ".X..........", ".X.XXXXXXXXX", ".X..XXXXXXX.", ".X..XXXXXXX.", ".X...XXXXX..", ".XXXXXXXXX..", "............", "...XX...XX..", "...XX...XX.."];
@@ -18,11 +19,10 @@ function PixelIcon({ rows }: { rows: string[] }) {
 export default async function Home() {
   const user = await getUser();
   if (!user) redirect("/login");
-  const { ownedCount, total } = await getCollection(user.id);
-  const { claimable } = await notifCounts(user.id);
+  const [{ ownedCount, total }, { claimable }, crown] = await Promise.all([getCollection(user.id, true), notifCounts(user.id), hasCrown(user.id)]);
   return (
     <>
-      <h2>Welcome, {user.username}!</h2>
+      <h2>Welcome, {user.username}!<Crown show={crown} size={3} /></h2>
       <div className="px" style={{ fontSize: 12, marginBottom: 8 }}>{ownedCount} / {total} COLLECTED</div>
       <div className="bar"><i style={{ width: `${total ? (ownedCount / total) * 100 : 0}%` }} /></div>
       <div style={{ margin: "18px 0" }}>

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Toast from "./Toast";
 import { TIER, TIER_KEYS, FUSABLE } from "@/lib/types";
 
 type Pack = { id: number; name: string; odds: Record<string, number> };
@@ -12,6 +13,7 @@ export default function AdminOdds({ packs, fusion, bonus }: { packs: Pack[]; fus
   const [fus, setFus] = useState<Record<string, string>>(Object.fromEntries(FUSABLE.map((t) => [t, String(fusion[t] ?? 0)])));
   const [bon, setBon] = useState({ PRIME: String(bonus.PRIME), ABSOLUTE: String(bonus.ABSOLUTE) });
   const [msg, setMsg] = useState("");
+  const [toast, setToast] = useState("");
   const num = (o: Record<string, string>) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Number(v) || 0]));
   const sum = (id: number) => Object.values(num(vals[id])).reduce((s, v) => s + v, 0);
 
@@ -19,7 +21,7 @@ export default function AdminOdds({ packs, fusion, bonus }: { packs: Pack[]; fus
     const r = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const d = await r.json().catch(() => ({}));
     setMsg(r.ok ? "Tersimpan ✔ (" + new Date().toLocaleTimeString() + ")" : d.error ?? "Gagal menyimpan.");
-    if (r.ok) router.refresh();
+    if (r.ok) { setToast("Berhasil disimpan!"); router.refresh(); }
   }
   return (
     <>
@@ -62,6 +64,7 @@ export default function AdminOdds({ packs, fusion, bonus }: { packs: Pack[]; fus
       </div>
       <div className="row"><button onClick={() => save("/api/admin/fusion-bonus", { PRIME: Number(bon.PRIME) || 0, ABSOLUTE: Number(bon.ABSOLUTE) || 0 })}>SIMPAN JACKPOT</button></div>
       {msg && <p className="msg" role="status">{msg}</p>}
+      <Toast text={toast} onDone={() => setToast("")} />
     </>
   );
 }

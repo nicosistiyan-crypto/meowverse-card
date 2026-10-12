@@ -36,15 +36,6 @@ export type Conv = { who: string | null; last: string; at: string; unread: numbe
 // The other player's profile picture and claimed border, shown next to their messages.
 export type ChatPeer = { avatarUrl: string | null; border: string | null };
 export type ChatMsg = { id: number; mine: boolean; body: string; at: string; read: boolean };
-// Inbox messages and system notifications.
-export type Msg = {
-  id: number;
-  who: string | null;
-  body: string;
-  at: string;
-  unread: boolean;
-  kind: string;
-};
 
 // What a card sells for, in coins, by tier (Sell menu).
 export const SELL_PRICE: Record<TierKey, number> = { C: 10, B: 25, A: 80, S: 250, S_PLUS: 700, PRIME: 3000, ABSOLUTE: 10000, COLLECTOR: 50000 };
@@ -53,3 +44,14 @@ export const SELL_PRICE: Record<TierKey, number> = { C: 10, B: 25, A: 80, S: 250
 export type VoucherKind = "blue" | "gold";
 export const VOUCHER_KINDS: VoucherKind[] = ["blue", "gold"];
 export const VOUCHER: Record<VoucherKind, { label: string }> = { blue: { label: "Voucher Biru" }, gold: { label: "Voucher Emas" } };
+
+// Hadiah di menu CLAIM (supabase/stage17.sql). `coins` ditentukan di server; CROWN tidak memberi coin, hanya simbol mahkota di kanan username.
+export type RewardKey = "LOGIN" | "SLEEPY" | "FIRST_ABS" | "CROWN";
+export const REWARDS: Record<RewardKey, { label: string; how: string; coins: number }> = {
+  LOGIN: { label: "Hadiah Login", how: "Berhasil login: klaim 1.000 coin pertamamu.", coins: 1000 },
+  SLEEPY: { label: "Kartu Sleepy Cat", how: "Dapatkan kartu tier C \"Sleepy Cat\".", coins: 5000 },
+  FIRST_ABS: { label: "Kartu Absolute Pertama", how: "Dapatkan kartu tier ABSOLUTE pertamamu.", coins: 20000 },
+  CROWN: { label: "Mahkota Kolektor", how: "Koleksi 150 kartu berbeda. Mahkota tampil di kanan username.", coins: 0 },
+};
+export const REWARD_KEYS = Object.keys(REWARDS) as RewardKey[];
+export const isReward = (v: unknown): v is RewardKey => typeof v === "string" && v in REWARDS;

@@ -3,14 +3,30 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "./Avatar";
-import { BORDERS, BORDER_KEYS, type BorderKey } from "@/lib/types";
+import Crown from "./Crown";
+import { refreshWallet } from "@/lib/wallet";
+import { BORDERS, BORDER_KEYS, REWARDS, REWARD_KEYS, type BorderKey, type RewardKey } from "@/lib/types";
 
 type Row = { border: string; claimed: boolean };
+type RewardRow = { reward: string; claimed: boolean };
 
-export default function ClaimClient({ username, avatarUrl, count, rows }: { username: string; avatarUrl: string | null; count: number; rows: Row[] }) {
+export default function ClaimClient({ username, avatarUrl, count, rows, rewards }: { username: string; avatarUrl: string | null; count: number; rows: Row[]; rewards: RewardRow[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState<BorderKey | null>(null);
   const [msg, setMsg] = useState("");
+  const [ok, setOk] = useState("");
+  const [rbusy, setRbusy] = useState<RewardKey | null>(null);
+
+  async function claimReward(k: RewardKey) {
+    setRbusy(k); setMsg(""); setOk("");
+    const r = await fetch("/api/claim/reward", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reward: k }) });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      setOk(d.coins > 0 ? `✔ ${Number(d.coins).toLocaleString("id-ID")} coin masuk ke saldomu!` : "✔ Mahkota diklaim! Sekarang tampil di kanan username-mu.");
+      refreshWallet(); router.refresh();
+    } else setMsg(d.error ?? "Gagal mengklaim.");
+    setRbusy(null);
+  }
 
   async function claim(b: BorderKey) {
     setBusy(b); setMsg("");
@@ -23,6 +39,27 @@ export default function ClaimClient({ username, avatarUrl, count, rows }: { user
   return (
     <>
       <h2>CLAIM</h2>
+      <h2 style={{ fontSize: 14 }}>HADIAH</h2>
+      <div className="rlist">
+        {REWARD_KEYS.map((k) => {
+          const R = REWARDS[k], row = rewards.find((r) => r.reward === k);
+          const state = row?.claimed ? "owned" : row ? "claimable" : "locked";
+          return (
+            <div key={k} className={"rcard" + (state === "locked" ? " off" : "")}>
+              <div className="rinfo">
+                <div className="px tagl">{R.label.toUpperCase()}{k === "CROWN" && <Crown show size={3} />}</div>
+                <div>{R.how}</div>
+                <div style={{ color: "var(--mute)" }}>{R.coins > 0 ? `Hadiah: ${R.coins.toLocaleString("id-ID")} coin` : "Hadiah: simbol mahkota di kanan username"}</div>
+              </div>
+              {state === "claimable" && <button className="big" disabled={rbusy !== null} onClick={() => claimReward(k)}>{rbusy === k ? "..." : "CLAIM"}</button>}
+              {state === "owned" && <button disabled>SUDAH DIKLAIM</button>}
+              {state === "locked" && <button disabled>TERKUNCI</button>}
+            </div>
+          );
+        })}
+      </div>
+      {ok && <p className="msg" role="status" style={{ color: "#3ddc84" }}>{ok}</p>}
+      <h2 style={{ fontSize: 14 }}>BORDER PROFIL</h2>
       <p className="msg">Kumpulkan kartu berbeda untuk membuka border profil (kartu duplikat tidak dihitung). Kartu unikmu sekarang: <b>{count}</b>. Border yang sudah terbuka tetap jadi milikmu walau koleksimu berkurang (misalnya karena fusi).</p>
       <div className="bcards">
         {BORDER_KEYS.map((k) => {

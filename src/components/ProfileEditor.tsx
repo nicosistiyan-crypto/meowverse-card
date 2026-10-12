@@ -28,7 +28,7 @@ export default function ProfileEditor({ username, avatarUrl, bio, border, claime
     const fd = new FormData(); fd.append("file", f);
     const r = await fetch("/api/profile/avatar", { method: "POST", body: fd });
     const d = await r.json().catch(() => ({}));
-    if (r.ok) { setUrl(d.url); setMsg("Foto profil diperbarui."); router.refresh(); } else setMsg(d.error ?? "Upload gagal.");
+    if (r.ok) { setUrl(d.url); setMsg("Foto profil diperbarui."); setToast("Foto profil berhasil disimpan!"); router.refresh(); } else setMsg(d.error ?? "Upload gagal.");
     setBusy(false); e.target.value = "";
   }
   async function saveBio() {
@@ -41,7 +41,7 @@ export default function ProfileEditor({ username, avatarUrl, bio, border, claime
     setBusy(true); setMsg("");
     const r = await fetch("/api/profile/border", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ border: b }) });
     const d = await r.json().catch(() => ({}));
-    if (r.ok) { setEq(b); setMsg(b ? `${BORDERS[b].label} dipasang.` : "Border dilepas."); router.refresh(); } else setMsg(d.error ?? "Gagal memasang border.");
+    if (r.ok) { setEq(b); setMsg(b ? `${BORDERS[b].label} dipasang.` : "Border dilepas."); setToast(b ? `${BORDERS[b].label} berhasil dipasang!` : "Border berhasil dilepas!"); router.refresh(); } else setMsg(d.error ?? "Gagal memasang border.");
     setBusy(false);
   }
   function toggle(id: number) {
