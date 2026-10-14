@@ -9,18 +9,23 @@ export async function pushMessage(userId: string, kind: string, body: string) {
 
 /** Unlocks any border the player now qualifies for and tells them about it. Returns the newly unlocked keys. */
 export async function syncBorders(userId: string): Promise<string[]> {
-  const { data, error } = await db.rpc("sync_borders", { p_user: userId });
+  // borders dan hadiah coin / mahkota (stage17.sql) dicek BERSAMAAN: dulu beruntun, jadi buka pack menunggu dua perjalanan ke database
+  const [{ data, error }] = await Promise.all([db.rpc("sync_borders", { p_user: userId }), syncRewards(userId)]);
   if (error) { console.error("sync_borders:", error.message); return []; }
   const fresh = ((data ?? []) as string[]).filter(isBorder);
   for (const b of fresh) await pushMessage(userId, "border", `🎁 ${BORDERS[b].label} terbuka! Buka menu CLAIM untuk mengklaimnya.`);
-  await syncRewards(userId);   // semua tempat yang memanggil syncBorders (buka pack, hadiah kartu, halaman claim) ikut mengecek hadiah coin
   return fresh;
 }
 
 /** Unlocks the coin / crown rewards the player now qualifies for (stage17.sql) and tells them. Returns the newly unlocked keys. */
 export async function syncRewards(userId: string): Promise<string[]> {
   const { data, error } = await db.rpc("sync_rewards", { p_user: userId });
-  if (error) { console.error("sync_rewards:", error.message); return []; }   // stage17.sql belum dijalankan: abaikan
+  if (error) {
+    console.error("sync_rewards:", error.message);   // fungsi belum ada / error: jalankan supabase/stage18.sql
+    // Hadiah User Baru tidak boleh bergantung pada fungsi database: tulis barisnya langsung (abaikan jika tabel belum ada)
+    await db.from("user_rewards").upsert({ user_id: userId, reward: "LOGIN" }, { onConflict: "user_id,reward", ignoreDuplicates: true });
+    return [];
+  }
   const fresh = ((data ?? []) as string[]).filter(isReward);
   for (const r of fresh) await pushMessage(userId, "reward", `${REWARDS[r].label} terbuka! Buka menu CLAIM untuk mengklaimnya.`);
   return fresh;

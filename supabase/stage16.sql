@@ -71,7 +71,7 @@ on conflict do nothing;
 alter table packs drop constraint if exists packs_card_count_check;
 -- Peluang awalnya disalin dari MV Pack 2 (bisa diubah di /admin). Dibuat hanya jika belum ada.
 insert into packs (name, card_count, odds)
-select 'MV Pack 3', 20,
+select 'Mv Pack 3', 20,
        coalesce((select odds from packs where lower(name) like '%pack 2%' or lower(name) = 'premium cat pack' order by id limit 1),
                 '{"C":50,"B":33,"A":11,"S":4,"S_PLUS":1.5,"PRIME":0.45,"ABSOLUTE":0.05}'::jsonb)
 where not exists (select 1 from packs where lower(name) like '%pack 3%');
@@ -84,4 +84,4 @@ update packs set voucher_kind = 'blue', voucher_cost = 4, coin_price = 0 where l
 alter table users add column if not exists last_seen timestamptz;
 
 notify pgrst, 'reload schema';
-select id, name, card_count, voucher_kind, voucher_cost, coin_price from packs order by id;   -- cek: MV Pack 3 = 20 kartu
+select id, name, card_count, voucher_kind, voucher_cost, coin_price from packs order by id;   -- cek: Mv Pack 3 = 20 kartu

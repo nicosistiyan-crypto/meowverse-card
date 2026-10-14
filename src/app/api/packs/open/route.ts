@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { getUser, limited } from "@/lib/auth";
 import { syncBorders } from "@/lib/notify";
+import { readWallet } from "@/lib/balance";
 import { TIER, type TierKey } from "@/lib/types";
 
 const body = z.object({ packId: z.number().int().positive() });
@@ -26,10 +27,19 @@ export async function POST(req: Request) {
   const p = body.safeParse(await req.json().catch(() => null));
   if (!p.success) return err("Invalid request.", 400);
 
+  // Semua bacaan yang saling bebas dijalankan BERSAMAAN (dulu beruntun: pack -> saldo -> kartu; membuat animasi pack menunggu server).
   // price columns only exist after stage11 / stage12; fall back to simpler reads so free packs keep working before that
-  let packQ: any = await db.from("packs").select("id, card_count, odds, enabled, coin_price, voucher_kind, voucher_cost").eq("id", p.data.packId).maybeSingle();
-  if (packQ.error) packQ = await db.from("packs").select("id, card_count, odds, enabled, coin_price").eq("id", p.data.packId).maybeSingle();
-  if (packQ.error) packQ = await db.from("packs").select("id, card_count, odds, enabled").eq("id", p.data.packId).maybeSingle();
+  const loadPack = async () => {
+    let q: any = await db.from("packs").select("id, card_count, odds, enabled, coin_price, voucher_kind, voucher_cost").eq("id", p.data.packId).maybeSingle();
+    if (q.error) q = await db.from("packs").select("id, card_count, odds, enabled, coin_price").eq("id", p.data.packId).maybeSingle();
+    if (q.error) q = await db.from("packs").select("id, card_count, odds, enabled").eq("id", p.data.packId).maybeSingle();
+    return q;
+  };
+  const [packQ, wallet, { data: cards }] = await Promise.all([
+    loadPack(),
+    readWallet(user.id),
+    db.from("cards").select("id, collection_number, name, tier, description, sprite_data").eq("enabled", true),
+  ]);
   const pack = packQ.data;
   if (!pack || !pack.enabled) return err("Pack not found.", 404);
   // payment: vouchers (blue / gold) if the pack has a voucher kind, otherwise coins, otherwise free
@@ -38,12 +48,10 @@ export async function POST(req: Request) {
   const price = vKind ? 0 : Math.max(0, Math.round(Number(pack.coin_price ?? 0)));
   const vName = vKind === "gold" ? "voucher emas" : "voucher biru";
   if (vKind) {
-    const { data: w } = await db.from("users").select("blue_vouchers, gold_vouchers").eq("id", user.id).maybeSingle();
-    const have = Number((w as any)?.[vKind === "gold" ? "gold_vouchers" : "blue_vouchers"] ?? 0);
+    const have = vKind === "gold" ? wallet.gold : wallet.blue;
     if (have < vCost) return err(`Kamu butuh ${vCost} ${vName} untuk membuka pack ini (punya ${have}). Beli di menu SHOP.`, 402);
   } else if (price > 0) {
-    const { data: w } = await db.from("users").select("coins").eq("id", user.id).maybeSingle();
-    if (Number((w as any)?.coins ?? 0) < price) return err(`Coin kamu kurang. Pack ini ${price.toLocaleString("id-ID")} coin.`, 402);
+    if (wallet.coins < price) return err(`Coin kamu kurang. Pack ini ${price.toLocaleString("id-ID")} coin.`, 402);
   }
 
   const cooldown = Number(process.env.PACK_COOLDOWN_SECONDS ?? 0);
@@ -53,7 +61,6 @@ export async function POST(req: Request) {
     if (wait > 0) return err(`Next pack in ${Math.ceil(wait)} seconds.`, 429);
   }
 
-  const { data: cards } = await db.from("cards").select("id, collection_number, name, tier, description, sprite_data").eq("enabled", true);
   const pool: Record<string, any[]> = {};
   for (const c of cards ?? []) (pool[c.tier] ??= []).push(c);
   const available = new Set(Object.keys(pool));

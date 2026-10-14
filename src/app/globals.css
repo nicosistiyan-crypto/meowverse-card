@@ -421,9 +421,9 @@ nav a.shake{animation:bellShake .8s}
 .pk2{position:relative;width:min(230px,62vw);aspect-ratio:3/4;animation:pkIn .8s cubic-bezier(.2,1.25,.4,1) both}
 @keyframes pkIn{from{transform:translateY(90px) scale(.5) rotate(-9deg);opacity:0}}
 .pk2-body{position:absolute;inset:0;z-index:1;filter:drop-shadow(0 10px 18px #0009)}
-.pk2.charge .pk2-body{animation:pkRumble 1.9s linear forwards}
+.pk2.charge .pk2-body{animation:pkRumble 1.9s linear forwards,pkHold .45s ease-in-out 1.9s infinite}
 .pk2-aura{position:absolute;inset:-35%;border-radius:50%;background:radial-gradient(circle,#ff6b9dcc 0,#ffd23f55 35%,#0000 65%);opacity:0;z-index:0}
-.pk2.charge .pk2-aura{animation:auraGrow 1.9s ease-in forwards}
+.pk2.charge .pk2-aura{animation:auraGrow 1.9s ease-in forwards,auraHold .7s ease-in-out 1.9s infinite alternate}
 @keyframes auraGrow{0%{opacity:0;transform:scale(.4)}60%{opacity:.7}100%{opacity:1;transform:scale(1.35)}}
 .pk2-seam{position:absolute;left:3%;right:3%;top:16.2%;height:4px;margin-top:-2px;background:linear-gradient(90deg,#0000,#fff 20%,#ffe9a8 50%,#fff 80%,#0000);box-shadow:0 0 14px 4px #fff,0 0 30px 10px #ffd23f;opacity:0;z-index:3}
 .pk2.charge .pk2-seam{animation:seamGlow 1.9s ease-in forwards}
@@ -575,9 +575,9 @@ header:has(.logout-tr) .wallet{order:2;flex-basis:100%}
 .rlist{display:grid;gap:12px;grid-template-columns:1fr}
 .rcard{border:3px solid var(--line);background:var(--panel);padding:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left}
 .rcard.off{opacity:.55}
-.rcard .rinfo{display:grid;gap:6px;min-width:0}
+.rcard .rinfo{display:grid;gap:6px;min-width:0;flex:1 1 0}
 .rcard .tagl{font-family:'Press Start 2P',monospace;font-size:9px;line-height:1.4}
-.rcard button{flex:none}
+.rcard button{flex:none;width:auto;min-width:150px}   /* .big bawaan = width:100%, itu yang membuat tombol CLAIM melebar menimpa teks */
 
 /* ================= MOBILE LAYOUT FIXES (hanya layar HP, desktop tidak berubah) ================= */
 @media (max-width:720px){
@@ -625,3 +625,30 @@ header:has(.logout-tr) .wallet{order:2;flex-basis:100%}
 /* loading state saat pindah menu ((game)/loading.tsx): bar berjalan memakai warna tema; animasi mati otomatis di prefers-reduced-motion */
 .ldg i{width:35%;animation:ldgRun 1s ease-in-out infinite alternate}
 @keyframes ldgRun{from{transform:translateX(0)}to{transform:translateX(185%)}}
+
+/* pack masih menunggu server setelah 1,9 dtk pengisian: getar kecil + aura berdenyut, bukan diam membeku (mulai dari pose akhir pengisian, tidak ada lompatan; hilang begitu pack terbuka) */
+@keyframes pkHold{0%,100%{transform:translate(-5.85px,-0.42px) rotate(-1.89deg) scale(1.07)}50%{transform:translate(-3px,0.6px) rotate(-1deg) scale(1.085)}}
+@keyframes auraHold{from{transform:scale(1.35)}to{transform:scale(1.5)}}
+
+/* ---- kemasan animasi memakai desain gambar pack-nya (tanpa bingkai putih / garis-garis pink bawaan .art) ---- */
+.art.wrapart{border:0;background:none}
+
+/* ---- Mv Pack 3: box terbuka -> 4 kemasan muncul -> kemasan disobek ---- */
+.bx{position:relative;width:min(300px,82vw);aspect-ratio:300/340;animation:pkIn .8s cubic-bezier(.2,1.25,.4,1) both}
+.bx-cv{position:absolute;left:0;bottom:0;width:100%;height:auto;aspect-ratio:124/102;image-rendering:pixelated;filter:drop-shadow(0 10px 16px #0009)}
+.bx-cv.body{z-index:3;clip-path:inset(17% 0 0 0)}
+.bx-cv.lid{z-index:5;clip-path:inset(0 0 83% 0);transform-origin:50% 14%;animation:bxLid .9s .35s cubic-bezier(.3,1.4,.5,1) forwards}
+@keyframes bxLid{0%{transform:none}55%{transform:translateY(-34%) rotate(-7deg)}100%{transform:translate(-14%,-74%) rotate(-24deg);opacity:0}}
+.bx-glow{position:absolute;left:50%;bottom:30%;width:130%;aspect-ratio:1;translate:-50% 0;border-radius:50%;background:radial-gradient(circle,#ffe9a8cc 0,#ff6b9d55 38%,#0000 65%);opacity:0;z-index:1;animation:bxGlow 1.2s .5s ease-out forwards}
+@keyframes bxGlow{to{opacity:1}}
+.bx-pack{position:absolute;left:calc(50% - 11% + var(--x) * .22);bottom:40%;width:22%;aspect-ratio:3/4;z-index:2;opacity:0;transform:translateY(70%) scale(.55);animation:bxRise .8s calc(1s + var(--i) * .17s) cubic-bezier(.2,1.3,.4,1) forwards}
+@keyframes bxRise{0%{opacity:0;transform:translateY(70%) scale(.55) rotate(0)}100%{opacity:1;transform:translateY(-104%) scale(1) rotate(var(--r))}}
+.bx-pack .art{filter:drop-shadow(0 4px 6px #0008)}
+.bx-pack .pk-scene{image-rendering:pixelated}
+.bx-row{display:flex;gap:min(10px,2vw);justify-content:center;align-items:flex-end;width:min(360px,94vw)}
+.bx-row .pk2{width:min(21vw,84px);flex:none}
+.bx-row .pk2.tear .pkt{animation-delay:var(--td,0s)}
+.bx-row .pk2.tear .pkb{animation-delay:calc(.15s + var(--td,0s))}
+.bx-row .pk2.tear .pk2-seam{animation-delay:var(--td,0s)}
+.bx-row .pk2.tear .burst{animation-delay:calc(.1s + var(--td,0s))}
+.bx-row .pk2.tear .pk2-rays{animation-delay:var(--td,0s)}

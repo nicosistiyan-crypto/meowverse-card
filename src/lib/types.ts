@@ -48,7 +48,7 @@ export const VOUCHER: Record<VoucherKind, { label: string }> = { blue: { label: 
 // Hadiah di menu CLAIM (supabase/stage17.sql). `coins` ditentukan di server; CROWN tidak memberi coin, hanya simbol mahkota di kanan username.
 export type RewardKey = "LOGIN" | "SLEEPY" | "FIRST_ABS" | "CROWN";
 export const REWARDS: Record<RewardKey, { label: string; how: string; coins: number }> = {
-  LOGIN: { label: "Hadiah Login", how: "Berhasil login: klaim 1.000 coin pertamamu.", coins: 1000 },
+  LOGIN: { label: "Hadiah User Baru", how: "Hadiah untuk pemain baru: klaim 1.000 coin pertamamu.", coins: 1000 },
   SLEEPY: { label: "Kartu Sleepy Cat", how: "Dapatkan kartu tier C \"Sleepy Cat\".", coins: 5000 },
   FIRST_ABS: { label: "Kartu Absolute Pertama", how: "Dapatkan kartu tier ABSOLUTE pertamamu.", coins: 20000 },
   CROWN: { label: "Mahkota Kolektor", how: "Koleksi 150 kartu berbeda. Mahkota tampil di kanan username.", coins: 0 },
