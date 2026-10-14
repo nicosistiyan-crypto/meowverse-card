@@ -20,12 +20,7 @@ export async function syncBorders(userId: string): Promise<string[]> {
 /** Unlocks the coin / crown rewards the player now qualifies for (stage17.sql) and tells them. Returns the newly unlocked keys. */
 export async function syncRewards(userId: string): Promise<string[]> {
   const { data, error } = await db.rpc("sync_rewards", { p_user: userId });
-  if (error) {
-    console.error("sync_rewards:", error.message);   // fungsi belum ada / error: jalankan supabase/stage18.sql
-    // Hadiah User Baru tidak boleh bergantung pada fungsi database: tulis barisnya langsung (abaikan jika tabel belum ada)
-    await db.from("user_rewards").upsert({ user_id: userId, reward: "LOGIN" }, { onConflict: "user_id,reward", ignoreDuplicates: true });
-    return [];
-  }
+  if (error) { console.error("sync_rewards:", error.message); return []; }   // stage17.sql belum dijalankan: abaikan
   const fresh = ((data ?? []) as string[]).filter(isReward);
   for (const r of fresh) await pushMessage(userId, "reward", `${REWARDS[r].label} terbuka! Buka menu CLAIM untuk mengklaimnya.`);
   return fresh;

@@ -9,7 +9,7 @@ export const BANNER_H = 135;
 export const BANNER_SCALE = 3;
 export type BannerKind = 1 | 2 | 3 | "collector";
 
-// (kind 3: kemasan di atas, box di bawah.) Jenis gambar dipilih dari nama pack (sama seperti stage11/12.sql yang mencocokkan pack lewat nama).
+// Jenis gambar dipilih dari nama pack (sama seperti stage11/12.sql yang mencocokkan pack lewat nama).
 export function packKind(name: string): BannerKind {
   const n = name.toLowerCase();
   if (n.includes("collector")) return "collector";
@@ -149,13 +149,13 @@ export function drawPackBanner(ctx: Ctx, kind: BannerKind, tiers: TierKey[] = []
     wrapper(ctx, 174, 44, 56, 75);
     box(ctx, 14, 34, 108, 90, BOX_BLUE);
   } else if (kind === 3) {
-    // kemasan di ATAS, box di BAWAH
+    // kumpulan box (belakang) + kemasan (depan)
     background(ctx, ["#4a1230", "#591638", "#6a1b41", "#7b2149"], 37, ["#fff", "#ffd23f", "#ff9ec4"]);
     floor(ctx, "#8e2c5a", "#c2517f");
-    [22, 72, 122, 172].forEach((x, i) => wrapper(ctx, x, 6 + (i % 2) * 2, 40, 52));
-    box(ctx, 6, 62, 72, 62, BOX_PURPLE);
-    box(ctx, 84, 62, 72, 62, BOX_TEAL);
-    box(ctx, 162, 62, 72, 62, BOX_ORANGE);
+    box(ctx, 6, 6, 72, 62, BOX_PURPLE);
+    box(ctx, 84, 6, 72, 62, BOX_TEAL);
+    box(ctx, 162, 6, 72, 62, BOX_ORANGE);
+    [22, 72, 122, 172].forEach((x, i) => wrapper(ctx, x, 72 + (i % 2) * 2, 40, 52));
   } else {
     // collector: kemasan mewah, satu per tier yang ada di pack ini (tier tertinggi di tengah dan paling besar)
     background(ctx, ["#0d0820", "#150b2c", "#241038", "#3a1a30", "#552400"], 51, ["#ffd23f", "#fff3b0", "#fff"]);
@@ -179,31 +179,5 @@ export function drawPackBanner(ctx: Ctx, kind: BannerKind, tiers: TierKey[] = []
     const r = rng(9);
     for (let i = 0; i < 12; i++) sparkle(ctx, Math.floor(r() * 236) + 2, Math.floor(r() * 100) + 4, i % 2 ? "#fff3b0" : "#ffd23f");
   }
-  ctx.restore();
-}
-
-
-// ---- Gambar untuk ANIMASI buka pack: kemasan & box memakai desain yang sama dengan gambar pack di menu PACK ----
-export const WRAP_W = 96, WRAP_H = 128, WRAP_SCALE = 3;
-export const BOX_CW = 124, BOX_CH = 102, BOX_SCALE = 3;
-
-/** Tier tertinggi yang ada di pack (dipakai untuk permata & bingkai emas kemasan Collector). */
-export function topTier(tiers: TierKey[]): TierKey { return sorted(tiers)[0]; }
-
-/** Satu kemasan memenuhi kanvas: Collector = kemasan mewah (bingkai emas + permata tier), pack lain = kemasan foil perak. */
-export function drawPackWrapper(ctx: Ctx, kind: BannerKind, tiers: TierKey[] = []) {
-  ctx.save();
-  ctx.scale(WRAP_SCALE, WRAP_SCALE);
-  ctx.imageSmoothingEnabled = false;
-  wrapper(ctx, 0, 0, WRAP_W, WRAP_H, kind === "collector" ? topTier(tiers) : undefined);
-  ctx.restore();
-}
-
-/** Satu box pack (ungu, sama dengan box di gambar Mv Pack 3). */
-export function drawPackBox(ctx: Ctx) {
-  ctx.save();
-  ctx.scale(BOX_SCALE, BOX_SCALE);
-  ctx.imageSmoothingEnabled = false;
-  box(ctx, 2, 3, 120, 96, BOX_PURPLE);
   ctx.restore();
 }

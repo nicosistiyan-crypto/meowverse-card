@@ -73,7 +73,7 @@ export default function ProfileEditor({ username, avatarUrl, bio, border, claime
       <textarea rows={3} maxLength={160} value={text} onChange={(e) => setText(e.target.value)} />
       <div className="row"><button onClick={saveBio} disabled={busy}>SIMPAN BIO</button><Link prefetch={false} href={`/u/${username}`}>Lihat profil publik</Link></div>
       <h2 id="border">BORDER PROFIL</h2>
-      <p className="msg">Kartu unikmu: {count} / {total} (sama dengan menu KARTU; duplikat tidak dihitung, kartu yang dijual atau difusi tetap terhitung). Border yang sudah diklaim tetap kamu miliki walau koleksimu berkurang.{waiting > 0 && <> <Link prefetch={false} href="/claim">Ada {waiting} border yang menunggu di menu CLAIM!</Link></>}</p>
+      <p className="msg">Kartu unikmu: {count} (duplikat tidak dihitung). Border yang sudah diklaim tetap kamu miliki walau koleksimu berkurang.{waiting > 0 && <> <Link prefetch={false} href="/claim">Ada {waiting} border yang menunggu di menu CLAIM!</Link></>}</p>
       <div className="bcards">
         <div className={"bcard" + (eq === null ? " new" : "")}>
           <Avatar url={url} name={username} size={64} />

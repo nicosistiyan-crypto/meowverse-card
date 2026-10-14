@@ -18,6 +18,7 @@ export async function POST(req: Request) {
   const coins = REWARDS[p.data.reward].coins;   // jumlah coin dari server, bukan dari browser
   const { data, error } = await db.rpc("claim_reward", { p_user: user.id, p_reward: p.data.reward, p_coins: coins });
   if (error) { console.error("claim_reward:", error); return err("Gagal mengklaim: " + error.message, 500); }
+  if (Number(data) === -2) return err("Kartu Sleepy Cat tier C tidak ada di akunmu.", 409);
   if (Number(data) < 0) return err("Hadiah ini belum terbuka atau sudah diklaim.", 409);
   return NextResponse.json({ ok: true, reward: p.data.reward, coins, balance: Number(data) });
 }

@@ -10,7 +10,7 @@ import { BORDERS, BORDER_KEYS, REWARDS, REWARD_KEYS, type BorderKey, type Reward
 type Row = { border: string; claimed: boolean };
 type RewardRow = { reward: string; claimed: boolean };
 
-export default function ClaimClient({ username, avatarUrl, count, rows, rewards, rewardsMissing }: { username: string; avatarUrl: string | null; count: number; rows: Row[]; rewards: RewardRow[]; rewardsMissing?: boolean }) {
+export default function ClaimClient({ username, avatarUrl, count, rows, rewards }: { username: string; avatarUrl: string | null; count: number; rows: Row[]; rewards: RewardRow[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState<BorderKey | null>(null);
   const [msg, setMsg] = useState("");
@@ -18,11 +18,12 @@ export default function ClaimClient({ username, avatarUrl, count, rows, rewards,
   const [rbusy, setRbusy] = useState<RewardKey | null>(null);
 
   async function claimReward(k: RewardKey) {
+    if (k === "SLEEPY" && !window.confirm("Kartu tier C \"Sleepy Cat\" akan ditukar dan hilang dari akunmu. Lanjutkan?")) return;
     setRbusy(k); setMsg(""); setOk("");
     const r = await fetch("/api/claim/reward", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reward: k }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
-      setOk(d.coins > 0 ? `✔ ${Number(d.coins).toLocaleString("id-ID")} coin masuk ke saldomu!` : "✔ Mahkota diklaim! Sekarang tampil di kanan username-mu.");
+      setOk(k === "SLEEPY" ? `✔ Kartu Sleepy Cat ditukar! ${Number(d.coins).toLocaleString("id-ID")} coin masuk ke saldomu.` : d.coins > 0 ? `✔ ${Number(d.coins).toLocaleString("id-ID")} coin masuk ke saldomu!` : "✔ Mahkota diklaim! Sekarang tampil di kanan username-mu.");
       refreshWallet(); router.refresh();
     } else setMsg(d.error ?? "Gagal mengklaim.");
     setRbusy(null);
@@ -40,7 +41,6 @@ export default function ClaimClient({ username, avatarUrl, count, rows, rewards,
     <>
       <h2>CLAIM</h2>
       <h2 style={{ fontSize: 14 }}>HADIAH</h2>
-      {rewardsMissing && <p className="msg" role="alert" style={{ color: "#ff6b6b" }}>Hadiah belum aktif di database. Admin: jalankan supabase/stage18.sql di Supabase SQL Editor.</p>}
       <div className="rlist">
         {REWARD_KEYS.map((k) => {
           const R = REWARDS[k], row = rewards.find((r) => r.reward === k);
